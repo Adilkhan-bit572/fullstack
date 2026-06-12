@@ -1,0 +1,6 @@
+.venv
+__pycache__
+app.egg-info
+*.pyc
+.mypy_cache
+.cache

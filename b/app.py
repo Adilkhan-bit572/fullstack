@@ -38,12 +38,11 @@ class User(SQLModel, table=True):
     id: UUID = Field(primary_key=True, default_factory=uuid4)
     created_at: datetime = Field(default_factory=timeutc_factory)
     name: str
-    bio: str | None
+    bio: str = Field(default="")
     hashed_pwd: str
 
 class UserCreate(SQLModel):
     name: str = Field(min_length=5, max_length=15)
-    bio: str | None = Field( max_length=100)
     plain_pwd: str = Field(min_length=8)
 
 class UserOut(SQLModel):
@@ -53,7 +52,7 @@ class UserOut(SQLModel):
     bio: str
 
 class UserUpdateBio(SQLModel):
-    new_bio: str | None = Field(max_length=100)
+    new_bio: str | None = Field(max_length=2000)
 
 # JSON payload containing access token
 class Token(SQLModel):
@@ -79,6 +78,7 @@ class ItemCreate(SQLModel):
 class ItemsOut(SQLModel):
     data: list[Item]
     count: int
+
 # ---------------------------------------------
 # Security
 # ---------------------------------------------
@@ -174,9 +174,7 @@ def lifetime(_):
 app = FastAPI(lifespan=lifetime)
 
 origins = [
-    "http://localhost",
-    "http://localhost:8080",
-    "http://localhost:5713"
+    "*",
 ]
 
 app.add_middleware(
@@ -205,7 +203,7 @@ def login_access_token(
         session=session, name=form_data.username, password=form_data.password
     )
     if not user:
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     return Token(
         access_token=create_access_token(
@@ -238,14 +236,16 @@ def update_bio(session: SessionDep, current_user: CurrentUser, upd: UserUpdateBi
 def new_user(session: SessionDep, user_in: UserCreate):
     if session.exec(select(User).where(User.name == user_in.name)).first():
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Name already taken")
+
     db_obj = User.model_validate(user_in, update={"hashed_pwd": get_password_hash(user_in.plain_pwd)})
+
     session.add(db_obj)
     session.commit()
     session.refresh(db_obj)
     return db_obj
 
 @app.get("/user/{id}/items/", tags=["user"], response_model=ItemsOut)
-def get_user_by_id(session: SessionDep,
+def get_users_items(session: SessionDep,
                    id: UUID,
                    offset: int=0,
                    limit: int = 10):

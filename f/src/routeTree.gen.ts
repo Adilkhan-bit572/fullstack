@@ -9,12 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AboutRouteImport } from './routes/about'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as MyprofileRouteImport } from './routes/myprofile'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProfileUser_idRouteImport } from './routes/profile/$user_id'
 
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyprofileRoute = MyprofileRouteImport.update({
+  id: '/myprofile',
+  path: '/myprofile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -22,40 +35,77 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileUser_idRoute = ProfileUser_idRouteImport.update({
+  id: '/profile/$user_id',
+  path: '/profile/$user_id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
+  '/myprofile': typeof MyprofileRoute
+  '/signup': typeof SignupRoute
+  '/profile/$user_id': typeof ProfileUser_idRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
+  '/myprofile': typeof MyprofileRoute
+  '/signup': typeof SignupRoute
+  '/profile/$user_id': typeof ProfileUser_idRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/about': typeof AboutRoute
+  '/login': typeof LoginRoute
+  '/myprofile': typeof MyprofileRoute
+  '/signup': typeof SignupRoute
+  '/profile/$user_id': typeof ProfileUser_idRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about'
+  fullPaths: '/' | '/login' | '/myprofile' | '/signup' | '/profile/$user_id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about'
-  id: '__root__' | '/' | '/about'
+  to: '/' | '/login' | '/myprofile' | '/signup' | '/profile/$user_id'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/myprofile'
+    | '/signup'
+    | '/profile/$user_id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AboutRoute: typeof AboutRoute
+  LoginRoute: typeof LoginRoute
+  MyprofileRoute: typeof MyprofileRoute
+  SignupRoute: typeof SignupRoute
+  ProfileUser_idRoute: typeof ProfileUser_idRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/myprofile': {
+      id: '/myprofile'
+      path: '/myprofile'
+      fullPath: '/myprofile'
+      preLoaderRoute: typeof MyprofileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -65,12 +115,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/profile/$user_id': {
+      id: '/profile/$user_id'
+      path: '/profile/$user_id'
+      fullPath: '/profile/$user_id'
+      preLoaderRoute: typeof ProfileUser_idRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AboutRoute: AboutRoute,
+  LoginRoute: LoginRoute,
+  MyprofileRoute: MyprofileRoute,
+  SignupRoute: SignupRoute,
+  ProfileUser_idRoute: ProfileUser_idRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

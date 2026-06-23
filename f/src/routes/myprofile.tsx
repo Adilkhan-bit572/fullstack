@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Profile } from '@/components/profile/profile'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger} from '@/components/ui/accordion'
 import { CreateItemMenu } from '@/components/items/createItem'
+import { UpdateBioMenu } from '@/components/profile/updateBioMenu'
 import {
   Pagination,
   PaginationContent,
@@ -35,6 +36,7 @@ function RouteComponent() {
 
   const { logout, user } = useAuth()
   const [page, setPage] = useState(1)
+  const [showBioMenu, setShowBioMenu] = useState(false)
   const offset = (page - 1) * PAGE_SIZE
 
   const {data} = useQuery({
@@ -50,7 +52,15 @@ function RouteComponent() {
 
   return (<div className='flex flex-row'>
     <div  className='w-1/3'>
-      <Profile {...user!}><Button className='bg-blue-500 hover:bg-blue-800' onClick={() => logout()}>logout</Button></Profile>
+      <Profile {...user!}>
+        <Button className='bg-blue-500 hover:bg-blue-800' onClick={() => logout()}>logout</Button>
+        <Button onClick={() => setShowBioMenu((s) => !s)}>Update bio</Button>
+      </Profile>
+      {showBioMenu && (
+        <div className='mt-4'>
+          <UpdateBioMenu currentBio={user!.bio} onSuccess={() => setShowBioMenu(false)} />
+        </div>
+      )}
     </div>
     <div className='w-2/3'>
     <Accordion>

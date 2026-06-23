@@ -18,7 +18,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 const formSchema = z.object({
-  title: z.string().min(1, "Title must be at least 1 character").max(25, "Title must be at most 25 characters"),
+  title: z.string().min(1, "Title must be at least 1 character").max(50, "Title must be at most 50 characters"),
   text: z.string().min(1, "Text is required").max(2000, "Text must be at most 1000 characters"),
 })
 

@@ -1,20 +1,29 @@
 import { getUserByIdUserIdGet, getUsersItemsUserIdItemsGet } from '@/client'
 import { PostItem } from '@/components/items/postItem'
+import { ErrorComponent } from '@/components/profile/error'
 import { Profile } from '@/components/profile/profile'
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
+import { z } from 'zod'
 
 export const Route = createFileRoute('/profile/$user_id')({
   component: RouteComponent,
+  params: {
+    parse: (params) => z.object({ user_id: z.uuid({ version: 'v4'})}).parse(params)
+  },
+  errorComponent: () => (
+    <ErrorComponent errorMessage="Invalid user id" />
+  ),
 })
 
 const PAGE_SIZE = 5
 
 function RouteComponent() {
   const { user_id } = Route.useParams()
-  const { data, error, isError, isLoading} = useQuery({
+
+  const { data, isError, isLoading} = useQuery({
     queryKey:["user", user_id],
     queryFn: async () => {
       const res = await getUserByIdUserIdGet({
@@ -38,10 +47,10 @@ function RouteComponent() {
   })
 
 
-  if (isLoading) return <p>Loading...</p>
+  if (isLoading) return (<div className='flex justify-center items-center h-full'><h3>Loading...</h3></div>)
 
   if (isError) {
-    return <p>Error: {(error as Error).message}</p>
+    return <ErrorComponent errorMessage='No user with such id'/ >
   }
 
   const totalPages = Math.max(1, Math.ceil((items_data?.count ?? 0) / PAGE_SIZE))

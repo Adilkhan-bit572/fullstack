@@ -26,7 +26,7 @@ Validation rules:
 - User `name`: 5–15 chars (must be unique)
 - User `bio`: up to 2000 chars (optional)
 - Password: min 8 chars
-- Item `title`: 1–25 chars
+- Item `title`: 1–50 chars
 - Item `text`: 1–2000 chars
 
 ## Authentication

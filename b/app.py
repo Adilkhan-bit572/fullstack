@@ -2,8 +2,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Annotated, Any
 from uuid import UUID, uuid4
-import secrets
+import os
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security.oauth2 import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -14,12 +15,13 @@ from pwdlib.hashers.argon2 import Argon2Hasher
 from pwdlib.hashers.bcrypt import BcryptHasher
 import jwt
 
+load_dotenv("../.env")
 
 # ---------------------------------------------
 # Db
 # ---------------------------------------------
 
-engine = create_engine("sqlite:///database.db")
+engine = create_engine(os.environ.get("DB_URI"))
 
 def session_yield():
     with Session(engine) as ses:
@@ -72,7 +74,7 @@ class Item(SQLModel, table=True):
     text: str
 
 class ItemCreate(SQLModel):
-    title: str = Field(min_length=1, max_length=25)
+    title: str = Field(min_length=1, max_length=50)
     text: str = Field(min_length=1, max_length=2000)
 
 class ItemsOut(SQLModel):
@@ -83,7 +85,7 @@ class ItemsOut(SQLModel):
 # Security
 # ---------------------------------------------
 
-SECRET_KEY = secrets.token_urlsafe(32)
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 password_hash = PasswordHash(
     (
@@ -92,7 +94,7 @@ password_hash = PasswordHash(
     )
 )
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = float(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
 ALGORITHM = "HS256"
 
@@ -133,14 +135,14 @@ def get_current_user(session: SessionDep, token: TokenDep) -> User:
         )
     user = session.get(User, token_data.sub)
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 # ---------------------------------------------
-# CRUD
+# CRUD ( authenticate ¯\_(ツ)_/¯ )
 # ---------------------------------------------
 
 dummy_hash = get_password_hash("This-is-a-dummy-hash-to-prevent_timing_attacks")
@@ -167,9 +169,11 @@ def authenticate(session: Session, name: str, password: str):
 def lifetime(_):
     SQLModel.metadata.create_all(engine)
     yield
-    file_path = Path("./database.db")
-    if file_path.exists():
-        file_path.unlink()
+    if os.environ.get('DEBUG', 'False') == 'True':
+        # SQLite db cleanup
+        file_path = Path("./database.db")
+        if file_path.exists():
+            file_path.unlink()
 
 app = FastAPI(lifespan=lifetime)
 
@@ -250,7 +254,7 @@ def get_users_items(session: SessionDep,
                    offset: int=0,
                    limit: int = 10):
     count = session.exec(select(func.count()).select_from(Item).where(Item.author_id == id)).one()
-    items =[item for item in session.exec(select(Item).where(Item.author_id == id).offset(offset).limit(limit)).all()]
+    items =[item for item in session.exec(select(Item).where(Item.author_id == id).offset(offset).order_by(Item.created_at.desc()).limit(limit)).all()]
     return ItemsOut(data=items, count=count)
 
 # item endpoints

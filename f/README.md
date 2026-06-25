@@ -1,4 +1,4 @@
-# fs-fun — Frontend
+# fullstack — Frontend
 
 The web client for **Konoha**: a small social app where users sign up, post items, and manage a profile. Built with React 19, Vite, TanStack Router/Query, and a type-safe API client generated from the backend's OpenAPI schema.
 
@@ -17,8 +17,8 @@ The web client for **Konoha**: a small social app where users sign up, post item
 
 ## Prerequisites
 
-- Node.js 20+ and npm
-- The [backend](../b) running locally (defaults to `http://127.0.0.1:8000`). The API client is generated from, and points at, that address.
+- Node.js 20+ and pnpm
+- The [backend](../b) reachable at `http://127.0.0.1:8080` (the port the root `compose.yaml` maps the backend to). The API client is generated from, and points at, that address.
 
 ## Getting started
 
@@ -28,7 +28,7 @@ pnpm install
 pnpm run dev
 ```
 
-The dev server prints a local URL (Vite default `http://localhost:5173`). The app talks to the backend at `http://127.0.0.1:8000` — make sure it's up first.
+The dev server prints a local URL (Vite default `http://localhost:5173`). The app talks to the backend at `http://127.0.0.1:8080` — make sure it's up first. For the full stack in one command, use Docker Compose from the repo root (see the [root README](../README.md)).
 
 ## Scripts
 
@@ -86,7 +86,7 @@ To regenerate after the backend API changes (with the backend running):
 pnpm run gen-cli
 ```
 
-This reads `http://127.0.0.1:8000/openapi.json` and writes the client into `src/client`. The base URL lives in `src/client/client.gen.ts`.
+This reads `http://127.0.0.1:8080/openapi.json` and writes the client into `src/client`. The base URL lives in `src/client/client.gen.ts`.
 
 ## Data fetching conventions
 

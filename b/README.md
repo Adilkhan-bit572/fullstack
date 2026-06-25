@@ -5,17 +5,34 @@ A monolithic [FastAPI](https://fastapi.tiangolo.com/) backend for a small social
 ## Tech stack
 
 - **FastAPI** — web framework
-- **SQLModel** — ORM + Pydantic models over SQLite (`database.db`)
+- **SQLModel** — ORM + Pydantic models over **PostgreSQL**
 - **Uvicorn** — ASGI server
 - **pwdlib** — password hashing (Argon2 primary, bcrypt fallback)
+- **PyJWT** — JWT access tokens
 
 ## Project layout
 
 | File | Purpose |
 |------|---------|
-| `main.py` | Entrypoint — runs the app with Uvicorn |
+| `main.py` | Entrypoint — runs the app with Uvicorn on `0.0.0.0:8000` |
 | `app.py` | The entire application, split into sections: **Db**, **Models**, **Security**, **Auth**, **CRUD**, **App**, **Routes** |
-| `pyproject.toml` | Project metadata and dependencies |
+| `pyproject.toml` | Project metadata and dependencies (managed with `uv`) |
+| `Dockerfile` | Container image (used by the root `compose.yaml`) |
+
+## Configuration
+
+The backend reads the following environment variables (provided via the repo-root `.env`, see `../.env.example`):
+
+| Variable | Purpose |
+|----------|---------|
+| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT` | Postgres connection |
+| `SECRET_KEY` | Key used to sign JWTs |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | Token lifetime |
+| `DEBUG` | When `"True"`, deletes a local `database.db` on shutdown (legacy cleanup) |
+
+> **Note:** the database URL in `app.py` is built against the host `db` — the Postgres service
+> name from the root `compose.yaml`. The backend therefore expects to run **inside** Docker
+> Compose, where that hostname resolves. See the [root README](../README.md).
 
 ## Data model
 
@@ -31,9 +48,7 @@ Validation rules:
 
 ## Authentication
 
-OAuth2 password flow with bearer JWT tokens. Obtain a token from `POST /login/access-token`, then send it as `Authorization: Bearer <token>` on protected endpoints. Tokens expire after 30 minutes.
-
-> **Note:** `SECRET_KEY` is generated fresh at process startup, so all tokens are invalidated whenever the server restarts.
+OAuth2 password flow with bearer JWT tokens (HS256). Obtain a token from `POST /login/access-token`, then send it as `Authorization: Bearer <token>` on protected endpoints. Tokens are signed with `SECRET_KEY` and expire after `ACCESS_TOKEN_EXPIRE_MINUTES` minutes.
 
 ## API endpoints
 
@@ -59,18 +74,27 @@ OAuth2 password flow with bearer JWT tokens. Obtain a token from `POST /login/ac
 
 ## Running
 
-Install dependencies and start the server:
+The backend is normally run via Docker Compose from the repo root (it needs the `db` Postgres
+service). See the [root README](../README.md):
+
+```bash
+docker compose up --build
+```
+
+Inside Compose the API is exposed on the host at `http://127.0.0.1:8080` (mapped to container
+port `8000`), with interactive docs at `http://127.0.0.1:8080/docs`.
+
+To work on dependencies locally:
 
 ```bash
 # from the b/ directory
 uv sync
-uv run python main.py
+uv run main.py   # serves on :8000, but needs a reachable Postgres at host `db`
 ```
 
-The API will be available at `http://127.0.0.1:8000`, with interactive docs at `http://127.0.0.1:8000/docs`.
-
-CORS is configured to allow requests from `http://localhost`, `http://localhost:8080`, and `http://localhost:5713`.
+CORS is currently configured to allow **all** origins (`*`).
 
 ## Database lifecycle
 
-On startup, all tables are created in `database.db`. **On shutdown, the database file is deleted** — data does not persist across server runs. This is suitable for development and demos, not production.
+On startup, all tables are created in the configured Postgres database. When `DEBUG="True"`,
+a local `database.db` file (legacy SQLite artifact) is removed on shutdown.

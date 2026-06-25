@@ -15,13 +15,15 @@ from pwdlib.hashers.argon2 import Argon2Hasher
 from pwdlib.hashers.bcrypt import BcryptHasher
 import jwt
 
-load_dotenv("../.env")
+load_dotenv()
 
 # ---------------------------------------------
 # Db
 # ---------------------------------------------
 
-engine = create_engine(os.environ.get("DB_URI"))
+DB_URI = f"postgresql://{os.environ.get("POSTGRES_USER")}:{os.environ.get("POSTGRES_PASSWORD")}@db:{os.environ.get("POSTGRES_PORT")}/{os.environ.get("POSTGRES_DB")}"
+
+engine = create_engine(DB_URI)
 
 def session_yield():
     with Session(engine) as ses:
